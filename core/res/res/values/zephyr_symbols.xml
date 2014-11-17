@@ -22,4 +22,6 @@
   <java-symbol type="array" name="config_forceEnabledComponents" />
   <!-- Config.xml entries -->
   <java-symbol type="bool" name="config_show_cmIMESwitcher"/>
+  <!-- LED pulse -->
+  <java-symbol type="bool" name="config_ledCanPulse" />
 </resources>
