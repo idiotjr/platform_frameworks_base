@@ -40,6 +40,7 @@ import com.android.systemui.qs.tiles.BrightnessTile;
 import com.android.systemui.qs.tiles.CastTile;
 import com.android.systemui.qs.tiles.CellularTile;
 import com.android.systemui.qs.tiles.ColorInversionTile;
+import com.android.systemui.qs.tiles.CompassTile;
 import com.android.systemui.qs.tiles.DndTile;
 import com.android.systemui.qs.tiles.FlashlightTile;
 import com.android.systemui.qs.tiles.HeadsUpTile;
@@ -310,6 +311,8 @@ public class QSTileHost implements QSTile.Host {
                 return new NavigationBarTile(this);
             case QSConstants.TILE_FLOATING:		
                 return new FloatingTile(this);
+            case QSConstants.TILE_COMPASS:
+                return new CompassTile(this);
             case QSConstants.TILE_NFC:
                 return new NfcTile(this);
             default:

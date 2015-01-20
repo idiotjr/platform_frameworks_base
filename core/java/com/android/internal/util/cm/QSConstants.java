@@ -42,6 +42,7 @@ public class QSConstants {
     public static final String TILE_NAVIGATION_BAR = "navigation_bar";
     public static final String TILE_FLOATING = "floating";
     public static final String TILE_NFC = "nfc";
+    public static final String TILE_COMPASS = "compass";
 
     // Order matters
     protected static final ArrayList<String> TILES_DEFAULT = new ArrayList<String>();
@@ -74,5 +75,6 @@ public class QSConstants {
         TILES_AVAILABLE.add(TILE_NAVIGATION_BAR);
         TILES_AVAILABLE.add(TILE_FLOATING);
         TILES_AVAILABLE.add(TILE_NFC);
+        TILES_AVAILABLE.add(TILE_COMPASS);
     }
 }
