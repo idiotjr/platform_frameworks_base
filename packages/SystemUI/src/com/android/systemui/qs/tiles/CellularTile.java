@@ -39,6 +39,7 @@ import com.android.systemui.statusbar.policy.SignalCallbackAdapter;
 
 /** Quick settings tile: Cellular **/
 public class CellularTile extends QSTile<QSTile.SignalState> {
+    public static final String SPEC = "cell";
     private static final Intent CELLULAR_SETTINGS = new Intent().setComponent(new ComponentName(
             "com.android.settings", "com.android.settings.Settings$DataUsageSummaryActivity"));
 
@@ -51,7 +52,7 @@ public class CellularTile extends QSTile<QSTile.SignalState> {
     private final CellSignalCallback mSignalCallback = new CellSignalCallback();
 
     public CellularTile(Host host) {
-        super(host);
+        super(host, SPEC);
         mController = host.getNetworkController();
         mDataController = mController.getMobileDataController();
         mDetailAdapter = new CellularDetailAdapter();
@@ -82,8 +83,20 @@ public class CellularTile extends QSTile<QSTile.SignalState> {
     }
 
     @Override
-    protected void handleClick() {
-        boolean enabled = mDataController.isMobileDataEnabled();
+    protected void handleToggleClick() {
+    boolean enabled = mDataController.isMobileDataEnabled();
+        MetricsLogger.action(mContext, getMetricsCategory());
+        if (mDataController.isMobileDataSupported()) {
+            mDataController.setMobileDataEnabled(!mDataController.isMobileDataEnabled());
+        } else {
+            // We have nothing to toggle; just give the user the Settings app.
+            mHost.startActivityDismissingKeyguard(CELLULAR_SETTINGS);
+        }
+    }
+
+    @Override
+    protected void handleDetailClick() {
+    boolean enabled = mDataController.isMobileDataEnabled();
         MetricsLogger.action(mContext, getMetricsCategory());
         if (mDataController.isMobileDataSupported()) {
             if (!enabled) {
@@ -92,16 +105,7 @@ public class CellularTile extends QSTile<QSTile.SignalState> {
                 mDataController.setMobileDataEnabled(false);
             }
         } else {
-            mHost.startActivityDismissingKeyguard(MOBILE_NETWORK_SETTINGS);
-        }
-    }
-
-    @Override
-    protected void handleSecondaryClick() {
-        if (mDataController.isMobileDataSupported()) {
-            showDetail(true);
-        } else {
-            mHost.startActivityDismissingKeyguard(MOBILE_NETWORK_SETTINGS);
+            mHost.startActivityDismissingKeyguard(CELLULAR_SETTINGS);
         }
     }
 

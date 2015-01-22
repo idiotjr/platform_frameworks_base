@@ -37,13 +37,13 @@ import com.android.systemui.qs.QSTile;
 
 /** Quick settings tile: Screenshot **/
 public class ScreenshotTile extends QSTile<QSTile.BooleanState> {
-
+    public static final String SPEC = "screenshot";
     private boolean mListening;
     private final Object mScreenshotLock = new Object();
     private ServiceConnection mScreenshotConnection = null;
 
     public ScreenshotTile(Host host) {
-        super(host);
+        super(host, SPEC);
     }
 
     @Override
@@ -57,7 +57,7 @@ public class ScreenshotTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    public void handleClick() {
+    public void handleToggleClick() {
         MetricsLogger.action(mContext, getMetricsCategory());
         mHost.collapsePanels();
         /* wait for the panel to close */
@@ -70,19 +70,12 @@ public class ScreenshotTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    protected void handleSecondaryClick() {
+     protected void handleDetailClick() {
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.setClassName("com.android.gallery3d",
             "com.android.gallery3d.app.GalleryActivity");
         mHost.startActivityDismissingKeyguard(intent);
-    }
-
-    @Override
-    public void handleLongClick() {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClassName("com.android.gallery3d",
-            "com.android.gallery3d.app.GalleryActivity");
-        mHost.startActivityDismissingKeyguard(intent);
+        handleToggleClick();
     }
 
     @Override

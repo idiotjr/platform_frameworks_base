@@ -35,6 +35,7 @@ import com.android.systemui.qs.QSTile;
 /** Quick settings tile: Brightness **/
 public class BrightnessTile extends QSTile<QSTile.BooleanState> {
 
+    public static final String SPEC = "brightness";
     private static final String SCREEN_BRIGHTNESS_MODE = "screen_brightness_mode";
     private static final int SCREEN_BRIGHTNESS_MODE_MANUAL = 0;
     private static final int SCREEN_BRIGHTNESS_MODE_AUTOMATIC = 1;
@@ -43,7 +44,7 @@ public class BrightnessTile extends QSTile<QSTile.BooleanState> {
     private boolean mListening;
 
     public BrightnessTile(Host host) {
-        super(host);
+        super(host, SPEC);
     }
 
     @Override
@@ -70,7 +71,7 @@ public class BrightnessTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    public void handleClick() {
+    public void handleToggleClick() {
         MetricsLogger.action(mContext, getMetricsCategory());
         mHost.collapsePanels();
         mContext.startActivityAsUser(new Intent(
@@ -78,14 +79,7 @@ public class BrightnessTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    protected void handleSecondaryClick() {
-        toggleState();
-        refreshState();
-        //qsCollapsePanel();
-    }
-
-    @Override
-    public void handleLongClick() {
+    public void handleDetailClick() {
         toggleState();
         refreshState();
         //qsCollapsePanel();

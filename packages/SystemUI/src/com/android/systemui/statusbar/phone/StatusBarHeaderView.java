@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2014 The Android Open Source Project
  *
@@ -17,6 +18,7 @@
 package com.android.systemui.statusbar.phone;
 
 import android.app.ActivityManager;
+import android.animation.ValueAnimator;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.ContentResolver;
@@ -46,6 +48,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.util.MathUtils;
 import android.util.TypedValue;
+import android.view.DragEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
@@ -99,14 +102,17 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
     private View mSignalCluster;
     private SettingsButton mSettingsButton;
     private View mSettingsContainer;
+    private QsAddButton mQsAddButton;
     private View mQsDetailHeader;
     private TextView mQsDetailHeaderTitle;
     private Switch mQsDetailHeaderSwitch;
     private ImageView mQsDetailHeaderProgress;
+    private ImageView mQsDeleteHeader;
     private TextView mEmergencyCallsOnly;
     private BatteryLevelTextView mBatteryLevel;
     private TextView mAlarmStatus;
     private TextView mWeatherLine1, mWeatherLine2;
+    private BatteryMeterView mBatteryMeterView;
 
     private boolean mShowEmergencyCallsOnly;
     private boolean mAlarmShowing;
@@ -158,6 +164,9 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
 
     private float mCurrentT;
     private boolean mShowingDetail;
+    private boolean mQsInReorderMode = false;
+    private boolean mQsAbleToShowHidden = false;
+    private boolean mQsShowingHidden = false;
     private boolean mDetailTransitioning;
     private ImageView mBackgroundImage;
     private Drawable mCurrentBackground;
@@ -192,15 +201,19 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
         mTaskManagerButton = findViewById(R.id.task_manager_button);
         mSettingsButton.setOnClickListener(this);
         mTaskManagerButton.setOnLongClickListener(this);
+        mQsAddButton = (QsAddButton) findViewById(R.id.qs_add_button);
+        mQsAddButton.setOnClickListener(this);
         mQsDetailHeader = findViewById(R.id.qs_detail_header);
         mQsDetailHeader.setAlpha(0);
         mQsDetailHeaderTitle = (TextView) mQsDetailHeader.findViewById(android.R.id.title);
         mQsDetailHeaderSwitch = (Switch) mQsDetailHeader.findViewById(android.R.id.toggle);
         mQsDetailHeaderProgress = (ImageView) findViewById(R.id.qs_detail_header_progress);
+        mQsDeleteHeader = (ImageView) findViewById(R.id.qs_delete_header);
         mEmergencyCallsOnly = (TextView) findViewById(R.id.header_emergency_calls_only);
         mBatteryLevel = (BatteryLevelTextView) findViewById(R.id.battery_level_text);
         mAlarmStatus = (TextView) findViewById(R.id.alarm_status);
         mAlarmStatus.setOnClickListener(this);
+        mBatteryMeterView = (BatteryMeterView) findViewById(R.id.battery);
         mSignalCluster = findViewById(R.id.signal_cluster);
         mSystemIcons = (LinearLayout) findViewById(R.id.system_icons);
         mBackgroundImage = (ImageView) findViewById(R.id.background_image);
@@ -234,13 +247,66 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
             }
         });
         requestCaptureValues();
+        setOnDragListener(new View.OnDragListener() {
+
+            @Override
+            public boolean onDrag(final View v, final DragEvent event) {
+                if (!mQsInReorderMode && event.getAction() != DragEvent.ACTION_DRAG_STARTED)
+                    return false;
+
+                switch (event.getAction()) {
+                case DragEvent.ACTION_DRAG_STARTED:
+                    // no-op specifying that we can accept the drag events
+                    return true;
+
+                case DragEvent.ACTION_DRAG_ENTERED:
+                case DragEvent.ACTION_DRAG_EXITED:
+                    final boolean dragEnter = event.getAction() == DragEvent.ACTION_DRAG_ENTERED;
+
+                    final ValueAnimator anim = ValueAnimator.ofInt(
+                        dragEnter ? 0xFF : 0x4D,
+                        dragEnter ? 0x4D : 0xFF
+                    );
+                    anim.setDuration(200);
+                    final Drawable draw = mQsDeleteHeader.getDrawable();
+                    anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+
+                        @Override
+                        public void onAnimationUpdate(final ValueAnimator animation) {
+                            draw.setAlpha((Integer) animation.getAnimatedValue());
+                        }
+
+                    });
+                    anim.start();
+                    return true;
+
+                case DragEvent.ACTION_DRAG_LOCATION:
+                    // no-op consume
+                    return true;
+
+                case DragEvent.ACTION_DROP:
+                    if (mQSPanel != null) {
+                        mQSPanel.hideTile(event.getLocalState());
+                    }
+                    return true; // this value is linked with event.getResult()
+
+                case DragEvent.ACTION_DRAG_ENDED:
+                    // no-op consume
+                    return true;
+                }
+
+                return false; // in the unlikely case...
+            }
+
+        });
 
         // RenderThread is doing more harm than good when touching the header (to expand quick
         // settings), so disable it for this view
         ((RippleDrawable) getBackground()).setForceSoftware(true);
         ((RippleDrawable) mSettingsButton.getBackground()).setForceSoftware(true);
         ((RippleDrawable) mSystemIconsSuperContainer.getBackground()).setForceSoftware(true);
-
+        ((RippleDrawable) mSystemIconsSuperContainer.getBackground()).setForceSoftware(true);
+        ((RippleDrawable) mQsAddButton.getBackground()).setForceSoftware(true);
         mStatusBarHeaderView = this;
         handleStatusBarHeaderViewBackround();
     }
@@ -358,7 +424,7 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
 
     public void setBatteryController(BatteryController batteryController) {
         mBatteryController = batteryController;
-        ((BatteryMeterView) findViewById(R.id.battery)).setBatteryController(batteryController);
+        mBatteryMeterView.setBatteryController(batteryController);
         mBatteryLevel.setBatteryController(batteryController);
     }
 
@@ -431,6 +497,9 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
         mTaskManagerButton.setVisibility(mExpanded && mShowTaskManager ? View.VISIBLE : View.GONE);
         mQsDetailHeader.setVisibility(mExpanded && mShowingDetail ? View.VISIBLE : View.GONE);
         mWeatherContainer.setVisibility(mExpanded && mShowWeather ? View.VISIBLE : View.GONE);
+        mQsAddButton.setVisibility(mExpanded && mQsAbleToShowHidden
+                ? View.VISIBLE : View.INVISIBLE);
+        mQsDeleteHeader.setVisibility(mExpanded && mQsInReorderMode ? VISIBLE : INVISIBLE);
         if (mSignalCluster != null) {
             updateSignalClusterDetachment();
         }
@@ -465,7 +534,9 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
         RelativeLayout.LayoutParams lp = (LayoutParams) mSystemIconsSuperContainer
                 .getLayoutParams();
         int rule = mExpanded
-                ? mSettingsContainer.getId()
+                ? mQsAbleToShowHidden
+                        ? mQsAddButton.getId()
+                        : mSettingsContainer.getId()
                 : mMultiUserSwitch.getId();
         int taskManager = mShowTaskManager && mExpanded
                 ? mTaskManagerButton.getId() : rule;
@@ -646,6 +717,11 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
                 }
             }
             startSettingsActivity();
+        } else if (v == mQsAddButton) {
+            if (mQSPanel != null) {
+                mQSPanel.showHidden(!mQsShowingHidden);
+                // The callback should deal with everything.
+            }
         } else if (v == mSystemIconsSuperContainer) {
             startBatteryActivity();
         } else if (v == mAlarmStatus && mNextAlarm != null) {
@@ -767,8 +843,13 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
         target.taskManagerTranslation = mExpanded
                 ? 0
                 : mSettingsContainer.getLeft() - mTaskManagerButton.getLeft();
+        target.qsAddAlpha = getAlphaForVisibility(mQsAddButton);
+        target.qsAddTranslation = mExpanded
+                ? 0
+                : mTaskManagerButton.getLeft() - mQsAddButton.getLeft();
         target.signalClusterAlpha = mSignalClusterDetached ? 0f : 1f;
         target.settingsRotation = !mExpanded ? 90f : 0f;
+        target.qsAddRotation = !mExpanded ? 90f : mQsShowingHidden ? -135f : 0f;
     }
 
     private float getAlphaForVisibility(View v) {
@@ -827,6 +908,9 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
         mTaskManagerButton.setTranslationY(mSystemIconsSuperContainer.getTranslationY());
         mTaskManagerButton.setTranslationX(values.settingsTranslation);
         mTaskManagerButton.setRotation(values.settingsRotation);
+        mQsAddButton.setTranslationY(mSystemIconsSuperContainer.getTranslationY());
+        mQsAddButton.setTranslationX(values.qsAddTranslation);
+        mQsAddButton.setRotation(values.qsAddRotation);
         applyAlpha(mEmergencyCallsOnly, values.emergencyCallsOnlyAlpha);
         if (!mShowingDetail && !mDetailTransitioning) {
             // Otherwise it needs to stay invisible
@@ -838,6 +922,7 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
         applyAlpha(mSettingsContainer, values.settingsAlpha);
         applyAlpha(mWeatherLine1, values.settingsAlpha);
         applyAlpha(mWeatherLine2, values.settingsAlpha);
+        applyAlpha(mQsAddButton, values.qsAddAlpha);
         applyAlpha(mSignalCluster, values.signalClusterAlpha);
         applyAlpha(mTaskManagerButton, values.settingsAlpha);
         if (!mExpanded) {
@@ -871,9 +956,12 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
         float taskManagerTranslation;
         float settingsAlpha;
         float settingsTranslation;
+        float qsAddAlpha;
+        float qsAddTranslation;
         float signalClusterAlpha;
         float settingsRotation;
         float weatherY;
+        float qsAddRotation;
 
         public void interpoloate(LayoutValues v1, LayoutValues v2, float t) {
             timeScale = v1.timeScale * (1 - t) + v2.timeScale * t;
@@ -888,9 +976,11 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
                     v1.taskManagerTranslation * (1 - t) + v2.taskManagerTranslation * t;
             settingsTranslation = v1.settingsTranslation * (1 - t) + v2.settingsTranslation * t;
             weatherY = v1.weatherY * (1 - t) + v2.weatherY * t;
+            qsAddTranslation = v1.qsAddTranslation * (1 - t) + v2.qsAddTranslation * t;
 
             float t1 = Math.max(0, t - 0.5f) * 2;
             settingsRotation = v1.settingsRotation * (1 - t1) + v2.settingsRotation * t1;
+            qsAddRotation = v1.qsAddRotation * (1 - t1) + v2.qsAddRotation * t1;
             emergencyCallsOnlyAlpha =
                     v1.emergencyCallsOnlyAlpha * (1 - t1) + v2.emergencyCallsOnlyAlpha * t1;
 
@@ -900,6 +990,7 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
             float t3 = Math.max(0, t - 0.7f) / 0.3f;
             batteryLevelAlpha = v1.batteryLevelAlpha * (1 - t3) + v2.batteryLevelAlpha * t3;
             settingsAlpha = v1.settingsAlpha * (1 - t3) + v2.settingsAlpha * t3;
+            qsAddAlpha = v1.qsAddAlpha * (1 - t3) + v2.qsAddAlpha * t3;
             dateExpandedAlpha = v1.dateExpandedAlpha * (1 - t3) + v2.dateExpandedAlpha * t3;
             dateCollapsedAlpha = v1.dateCollapsedAlpha * (1 - t3) + v2.dateCollapsedAlpha * t3;
             alarmStatusAlpha = v1.alarmStatusAlpha * (1 - t3) + v2.alarmStatusAlpha * t3;
@@ -934,6 +1025,42 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
         }
 
         @Override
+        public void onAbleToShowHidden(final boolean isAbleToShow) {
+            post(new Runnable() {
+
+                @Override
+                public void run() {
+                    handleQsAbleToShowHidden(isAbleToShow);
+                }
+
+            });
+        }
+
+        @Override
+        public void onShowingHidden(final boolean isShowingHidden) {
+            post(new Runnable() {
+
+                @Override
+                public void run() {
+                    handleQsShowingHidden(isShowingHidden);
+                }
+
+            });
+        }
+
+        @Override
+        public void onReorderMode(final boolean isInReorderMode) {
+            post(new Runnable() {
+
+                @Override
+                public void run() {
+                    handleQsReorderMode(isInReorderMode);
+                }
+
+            });
+        }
+
+        @Override
         public void onScanStateChanged(final boolean state) {
             post(new Runnable() {
                 @Override
@@ -962,13 +1089,13 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
 
         private void handleShowingDetail(final QSTile.DetailAdapter detail) {
             final boolean showingDetail = detail != null;
-            transition(mClock, !showingDetail);
-            transition(mDateGroup, !showingDetail);
+            transition(mClock, !showingDetail && !mQsInReorderMode);
+            transition(mDateGroup, !showingDetail && !mQsInReorderMode);
             if (mShowWeather) {
                 transition(mWeatherContainer, !showingDetail);
             }
             if (mAlarmShowing) {
-                transition(mAlarmStatus, !showingDetail);
+                transition(mAlarmStatus, !showingDetail && !mQsInReorderMode);
             }
             transition(mQsDetailHeader, showingDetail);
             mShowingDetail = showingDetail;
@@ -994,6 +1121,49 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
             } else {
                 mQsDetailHeader.setClickable(false);
             }
+        }
+
+        private void handleQsAbleToShowHidden(final boolean isAbleToShow) {
+            if (mQsAbleToShowHidden == isAbleToShow) return;
+            mQsAbleToShowHidden = isAbleToShow;
+
+            mQsAddButton.setVisibility(mExpanded && isAbleToShow
+                    ? View.VISIBLE : View.INVISIBLE);
+            mExpandedValues.qsAddAlpha = isAbleToShow ? 1f : 0f;
+            updateSystemIconsLayoutParams();
+            requestCaptureValues();
+        }
+
+        private void handleQsShowingHidden(final boolean isShowingHidden) {
+            if (mQsShowingHidden == isShowingHidden) return;
+            mQsShowingHidden = isShowingHidden;
+
+            final float degRotation = isShowingHidden ? -135f : 0f;
+            mExpandedValues.qsAddRotation = degRotation;
+            if (mExpanded) {
+                mQsAddButton.rotate(degRotation);
+            } else {
+                updateLayoutValues(mCurrentT);
+            }
+        }
+
+        private void handleQsReorderMode(final boolean isInReorderMode) {
+            transition(mClock, !isInReorderMode && !mShowingDetail);
+            transition(mDateGroup, !isInReorderMode && !mShowingDetail);
+            if (mAlarmShowing) {
+                transition(mAlarmStatus, !isInReorderMode && !mShowingDetail);
+            }
+            transition(mMultiUserSwitch, !isInReorderMode);
+            transition(mSettingsContainer, !isInReorderMode);
+            transition(mEmergencyCallsOnly, !isInReorderMode && mShowEmergencyCallsOnly);
+            transition(mQsAddButton, !isInReorderMode && mQsAbleToShowHidden);
+            transition(mBatteryMeterView, !isInReorderMode);
+            transition(mBatteryLevel, !isInReorderMode);
+            transition(mQsDeleteHeader, isInReorderMode);
+            if (isInReorderMode) {
+                mQsDeleteHeader.getDrawable().setAlpha(0xFF);
+            }
+            mQsInReorderMode = isInReorderMode;
         }
 
         private void transition(final View v, final boolean in) {

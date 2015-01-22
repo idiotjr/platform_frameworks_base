@@ -28,13 +28,13 @@ import com.android.systemui.R;
 
 /** Quick settings tile: Heads up **/
 public class HeadsUpTile extends QSTile<QSTile.BooleanState> {
-
+    public static final String SPEC = "headsup";
     //private static final Intent NOTIFICATION_SETTINGS = new Intent("android.settings.NOTIFICATION_MANAGER");
 
     private final GlobalSetting mSetting;
 
     public HeadsUpTile(Host host) {
-        super(host);
+        super(host, SPEC);
 
         mSetting = new GlobalSetting(mContext, mHandler, Global.HEADS_UP_NOTIFICATIONS_ENABLED) {
             @Override
@@ -50,7 +50,7 @@ public class HeadsUpTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    protected void handleClick() {
+    protected void handleToggleClick() {
         MetricsLogger.action(mContext, getMetricsCategory());
         setEnabled(!mState.value);
         refreshState();
@@ -60,6 +60,12 @@ public class HeadsUpTile extends QSTile<QSTile.BooleanState> {
     protected void handleLongClick() {
         //mHost.startActivityDismissingKeyguard(NOTIFICATION_SETTINGS);
     }
+
+    @Override
+    protected void handleDetailClick() {
+        // There are no additional details and we do not want to link this up to Accessibility.
+        handleToggleClick();
+      }
 
     private void setEnabled(boolean enabled) {
         Settings.Global.putInt(mContext.getContentResolver(),

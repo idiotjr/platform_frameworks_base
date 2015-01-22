@@ -33,6 +33,7 @@ import com.android.internal.logging.MetricsLogger;
  * USB Tether quick settings tile
  */
 public class UsbTetherTile extends QSTile<QSTile.BooleanState> {
+    public static final String SPEC = "usb_tether";
     private static final Intent WIRELESS_SETTINGS = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
 
     private final ConnectivityManager mConnectivityManager;
@@ -43,7 +44,7 @@ public class UsbTetherTile extends QSTile<QSTile.BooleanState> {
     private boolean mUsbConnected = false;
 
     public UsbTetherTile(Host host) {
-        super(host);
+        super(host, SPEC);
         mConnectivityManager = (ConnectivityManager) mContext
                 .getSystemService(Context.CONNECTIVITY_SERVICE);
     }
@@ -67,13 +68,19 @@ public class UsbTetherTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    protected void handleClick() {
+    protected void handleToggleClick() {
         mConnectivityManager.setUsbTethering(!mUsbTethered);
     }
 
     @Override
     protected void handleLongClick() {
         mHost.startActivityDismissingKeyguard(WIRELESS_SETTINGS);
+    }
+
+    @Override
+    protected void handleDetailClick() {
+        mHost.startActivityDismissingKeyguard(WIRELESS_SETTINGS);
+        handleToggleClick();
     }
 
     private void updateState() {

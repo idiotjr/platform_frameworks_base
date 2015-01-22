@@ -39,12 +39,14 @@ public class HotspotTile extends QSTile<QSTile.BooleanState> {
     private final AnimationIcon mDisable =
             new AnimationIcon(R.drawable.ic_hotspot_disable_animation);
 
+    public static final String SPEC = "hotspot";
+
     private final HotspotController mController;
     private final Callback mCallback = new Callback();
     private final UsageTracker mUsageTracker;
 
     public HotspotTile(Host host) {
-        super(host);
+        super(host, SPEC);
         mController = host.getHotspotController();
         mUsageTracker = newUsageTracker(host.getContext());
         mUsageTracker.setListening(true);
@@ -71,7 +73,7 @@ public class HotspotTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    protected void handleClick() {
+    protected void handleToggleClick() {
         boolean airplaneMode = (Settings.Global.getInt(mContext.getContentResolver(),
                 Settings.Global.AIRPLANE_MODE_ON, 0) == 1);
         if (airplaneMode) {
@@ -83,7 +85,7 @@ public class HotspotTile extends QSTile<QSTile.BooleanState> {
             d.show();
             return;
         }
-        final boolean isEnabled = (Boolean) mState.value;
+        final boolean isEnabled = mState.value;
         MetricsLogger.action(mContext, getMetricsCategory(), !isEnabled);
         mController.setHotspotEnabled(!isEnabled);
         mEnable.setAllowAnimation(true);
@@ -91,13 +93,9 @@ public class HotspotTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    protected void handleSecondaryClick() {
+    protected void handleDetailClick() {
         mHost.startActivityDismissingKeyguard(TETHER_SETTINGS);
-    }
-
-    @Override
-    protected void handleLongClick() {
-        mHost.startActivityDismissingKeyguard(TETHER_SETTINGS);
+        handleToggleClick();
     }
 
     @Override

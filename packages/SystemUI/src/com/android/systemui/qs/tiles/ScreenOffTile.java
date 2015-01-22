@@ -37,11 +37,13 @@ import com.android.systemui.qs.QSTile;
 /** Quick settings tile: Screen off **/
 public class ScreenOffTile extends QSTile<QSTile.BooleanState> {
 
+   public static final String SPEC = "screenoff";
+
     private PowerManager mPm;
     private boolean mListening;
 
     public ScreenOffTile(Host host) {
-        super(host);
+        super(host, SPEC);
         mPm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
     }
 
@@ -56,24 +58,18 @@ public class ScreenOffTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    public void handleClick() {
+    public void handleToggleClick() {
         MetricsLogger.action(mContext, getMetricsCategory());
         mHost.collapsePanels();
         mPm.goToSleep(SystemClock.uptimeMillis());
     }
 
     @Override
-    protected void handleSecondaryClick() {
-        MetricsLogger.action(mContext, getMetricsCategory());
-        mHost.collapsePanels();
-        triggerVirtualKeypress(KeyEvent.KEYCODE_POWER, true);
-    }
-
-    @Override
-    public void handleLongClick() {
-        MetricsLogger.action(mContext, getMetricsCategory());
-        mHost.collapsePanels();
-        triggerVirtualKeypress(KeyEvent.KEYCODE_POWER, true);
+    protected void handleDetailClick() {
+       MetricsLogger.action(mContext, getMetricsCategory());
+       mHost.collapsePanels();
+       triggerVirtualKeypress(KeyEvent.KEYCODE_POWER, true);
+       handleToggleClick();
     }
 
     @Override

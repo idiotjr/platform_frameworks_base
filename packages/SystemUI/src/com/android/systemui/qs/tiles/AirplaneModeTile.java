@@ -38,12 +38,14 @@ public class AirplaneModeTile extends QSTile<QSTile.BooleanState> {
     private final AnimationIcon mDisable =
             new AnimationIcon(R.drawable.ic_signal_airplane_disable_animation);
 
+    public static final String SPEC = "airplane";
+
     private final GlobalSetting mSetting;
 
     private boolean mListening;
 
     public AirplaneModeTile(Host host) {
-        super(host);
+        super(host, SPEC);
 
         mSetting = new GlobalSetting(mContext, mHandler, Global.AIRPLANE_MODE_ON) {
             @Override
@@ -59,7 +61,7 @@ public class AirplaneModeTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    public void handleClick() {
+    protected void handleToggleClick() {
         MetricsLogger.action(mContext, getMetricsCategory(), !mState.value);
         setEnabled(!mState.value);
         mEnable.setAllowAnimation(true);
@@ -67,13 +69,14 @@ public class AirplaneModeTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    protected void handleSecondaryClick() {
+    public void handleLongClick() {
         mHost.startActivityDismissingKeyguard(WIRELESS_SETTINGS);
     }
 
     @Override
-    public void handleLongClick() {
+    protected void handleDetailClick() {
         mHost.startActivityDismissingKeyguard(WIRELESS_SETTINGS);
+        handleToggleClick();
     }
 
     private void setEnabled(boolean enabled) {

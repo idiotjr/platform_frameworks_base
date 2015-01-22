@@ -45,6 +45,8 @@ import java.util.Objects;
 
 /** View that represents a standard quick settings tile. **/
 public class QSTileView extends ViewGroup {
+    private static final Typeface CONDENSED = Typeface.create("sans-serif-condensed",
+            Typeface.NORMAL);
 
     protected final Context mContext;
     private final View mIcon;
@@ -56,6 +58,7 @@ public class QSTileView extends ViewGroup {
     private final int mTilePaddingBelowIconPx;
     private final int mDualTileVerticalPaddingPx;
     private final View mTopBackgroundView;
+    private final Drawable mTileBackground;
 
     private TextView mLabel;
     private QSDualTileLabel mDualLabel;
@@ -63,8 +66,8 @@ public class QSTileView extends ViewGroup {
     private OnClickListener mClickPrimary;
     private OnClickListener mClickSecondary;
     private OnLongClickListener mClickLong;
-    private Drawable mTileBackground;
     private RippleDrawable mRipple;
+    private float mRealElevation;
 
     public QSTileView(Context context) {
         super(context);
@@ -119,88 +122,115 @@ public class QSTileView extends ViewGroup {
         }
     }
 
-    private void recreateLabel() {
-        CharSequence labelText = null;
-        CharSequence labelDescription = null;
-        if (mLabel != null) {
-            labelText = mLabel.getText();
-            removeView(mLabel);
-            mLabel = null;
-        }
+    private synchronized void recreateLabel() {
+        final CharSequence labelText;
+        final CharSequence labelDescription;
         if (mDualLabel != null) {
             labelText = mDualLabel.getText();
+            labelDescription = mDualLabel.getContentDescription();
+        } else if (mLabel != null) {
+            labelText = mLabel.getText();
             labelDescription = mLabel.getContentDescription();
-            removeView(mDualLabel);
-            mDualLabel = null;
+        } else {
+            labelText = "";
+            labelDescription = "";
         }
+
         final Resources res = mContext.getResources();
         if (mDual) {
-            mDualLabel = new QSDualTileLabel(mContext);
-            mDualLabel.setId(View.generateViewId());
-            mDualLabel.setBackgroundResource(R.drawable.btn_borderless_rect);
-            mDualLabel.setFirstLineCaret(mContext.getDrawable(R.drawable.qs_dual_tile_caret));
-            mDualLabel.setTextColor(mContext.getColor(R.color.qs_tile_text));
-            mDualLabel.setPadding(0, mDualTileVerticalPaddingPx, 0, mDualTileVerticalPaddingPx);
-            mDualLabel.setTypeface(Typeface.create("sans-serif-condensed", Typeface.NORMAL));
-            mDualLabel.setTextSize(TypedValue.COMPLEX_UNIT_PX,
+            if (mLabel != null) {
+                removeView(mLabel);
+                mLabel = null;
+            }
+
+            final QSDualTileLabel dualLabel = mDualLabel == null ?
+                    new QSDualTileLabel(mContext) : mDualLabel;
+            dualLabel.setId(View.generateViewId());
+            dualLabel.setBackgroundResource(R.drawable.btn_borderless_rect);
+            dualLabel.setFirstLineCaret(mContext.getDrawable(R.drawable.qs_dual_tile_caret));
+            dualLabel.setTextColor(mContext.getColor(R.color.qs_tile_text));
+            dualLabel.setPadding(0, mDualTileVerticalPaddingPx, 0, mDualTileVerticalPaddingPx);
+            dualLabel.setTypeface(CONDENSED);
+            dualLabel.setTextSize(TypedValue.COMPLEX_UNIT_PX,
                     res.getDimensionPixelSize(R.dimen.qs_tile_text_size));
-            mDualLabel.setClickable(true);
-            mDualLabel.setOnClickListener(mClickSecondary);
-            mDualLabel.setFocusable(true);
-            if (labelText != null) {
-                mDualLabel.setText(labelText);
+            dualLabel.setOnClickListener(mClickSecondary);
+            dualLabel.setOnLongClickListener(mClickLong);
+            dualLabel.setClickable(mClickSecondary != null);
+            dualLabel.setLongClickable(mClickLong != null);
+            dualLabel.setFocusable(true);
+            dualLabel.setText(labelText);
+            dualLabel.setContentDescription(labelDescription);
+            if (mDualLabel == null) {
+                addView(mDualLabel = dualLabel);
             }
-            if (labelDescription != null) {
-                mDualLabel.setContentDescription(labelDescription);
-            }
-            addView(mDualLabel);
-            mDualLabel.setAccessibilityTraversalAfter(mTopBackgroundView.getId());
         } else {
-            mLabel = new TextView(mContext);
-            mLabel.setTextColor(mContext.getColor(R.color.qs_tile_text));
-            mLabel.setGravity(Gravity.CENTER_HORIZONTAL);
-            mLabel.setMinLines(2);
-            mLabel.setPadding(0, 0, 0, 0);
-            mLabel.setTypeface(Typeface.create("sans-serif-condensed", Typeface.NORMAL));
-            mLabel.setTextSize(TypedValue.COMPLEX_UNIT_PX,
-                    res.getDimensionPixelSize(R.dimen.qs_tile_text_size));
-            mLabel.setClickable(false);
-            if (labelText != null) {
-                mLabel.setText(labelText);
+            if (mDualLabel != null) {
+                mDualLabel.setOnClickListener(null);
+                mDualLabel.setClickable(false);
+                mDualLabel.setOnLongClickListener(null);
+                mDualLabel.setLongClickable(false);
+                mDualLabel.setFocusable(false);
+
+                removeView(mDualLabel);
+                mDualLabel = null;
             }
-            addView(mLabel);
+
+            final TextView label = mLabel == null ? new TextView(mContext) : mLabel;
+            label.setId(android.R.id.title);
+            label.setTextColor(mContext.getColor(R.color.qs_tile_text));
+            label.setGravity(Gravity.CENTER_HORIZONTAL);
+            label.setMinLines(2);
+            label.setPadding(0, 0, 0, 0);
+            label.setTypeface(CONDENSED);
+            label.setTextSize(TypedValue.COMPLEX_UNIT_PX,
+                    res.getDimensionPixelSize(R.dimen.qs_tile_text_size));
+            label.setClickable(false);
+            label.setText(labelText);
+            label.setContentDescription(labelDescription);
+            if (mLabel == null) {
+                addView(mLabel = label);
+            }
         }
     }
 
-    public boolean setDual(boolean dual) {
+    public boolean isDual() {
+        return mDual;
+    }
+
+    public synchronized void setDual(final boolean dual) {
         final boolean changed = dual != mDual;
         mDual = dual;
-        if (changed) {
-            recreateLabel();
-        }
+
         if (mTileBackground instanceof RippleDrawable) {
             setRipple((RippleDrawable) mTileBackground);
         }
-        if (dual) {
-            mTopBackgroundView.setOnClickListener(mClickPrimary);
-            mTopBackgroundView.setOnLongClickListener(mClickLong);
-            setOnClickListener(null);
-            setClickable(false);
-            setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-            mTopBackgroundView.setBackground(mTileBackground);
-        } else {
-            mTopBackgroundView.setOnClickListener(null);
-            mTopBackgroundView.setClickable(false);
-            setOnClickListener(mClickPrimary);
-            setOnLongClickListener(mClickLong);
-            setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
-            setBackground(mTileBackground);
-        }
+
+        final View priority = dual ? mTopBackgroundView : this;
+        final View other = dual ? this : mTopBackgroundView;
+
+        priority.setOnClickListener(mClickPrimary);
+        priority.setOnLongClickListener(mClickLong);
+        priority.setClickable(mClickPrimary != null);
+        priority.setLongClickable(mClickLong != null);
+        other.setOnClickListener(null);
+        other.setClickable(false);
+        other.setOnLongClickListener(null);
+        other.setLongClickable(false);
+
+        setImportantForAccessibility(dual ? View.IMPORTANT_FOR_ACCESSIBILITY_NO :
+                View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+
+        mTopBackgroundView.setBackground(dual ? mTileBackground : null);
+        setBackground(dual ? null : mTileBackground);
+
         mTopBackgroundView.setFocusable(dual);
         setFocusable(!dual);
         mDivider.setVisibility(dual ? VISIBLE : GONE);
+        if (changed) {
+            recreateLabel();
+            updateTopPadding();
+        }
         postInvalidate();
-        return changed;
     }
 
     private void setRipple(RippleDrawable tileBackground) {
@@ -214,6 +244,33 @@ public class QSTileView extends ViewGroup {
         mClickPrimary = clickPrimary;
         mClickSecondary = clickSecondary;
         mClickLong = clickLong;
+
+        final View priority = mDual ? mTopBackgroundView : this;
+        final View other = mDual ? this : mTopBackgroundView;
+
+        if (priority != null) {
+            priority.setOnClickListener(clickPrimary);
+            priority.setClickable(clickPrimary != null);
+
+            priority.setOnLongClickListener(clickLong);
+            priority.setLongClickable(clickLong != null);
+        }
+
+        if (other != null) {
+            other.setOnClickListener(null);
+            other.setClickable(false);
+
+            other.setOnLongClickListener(null);
+            other.setLongClickable(false);
+        }
+
+        if (mDualLabel != null) {
+            mDualLabel.setOnClickListener(clickSecondary);
+            mDualLabel.setClickable(clickSecondary != null);
+
+            mDualLabel.setOnLongClickListener(clickLong);
+            mDualLabel.setLongClickable(clickLong != null);
+        }
     }
 
     protected View createIcon() {
@@ -345,6 +402,10 @@ public class QSTileView extends ViewGroup {
         }
         firstView.setAccessibilityTraversalAfter(previousView.getId());
         return lastView;
+    }
+
+    public View.DragShadowBuilder getDragShadowBuilder() {
+        return new View.DragShadowBuilder(mIcon);
     }
 
     private class H extends Handler {

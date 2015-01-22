@@ -18,6 +18,7 @@ package com.android.systemui.qs.tiles;
 
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.provider.Settings;
 
 import com.android.internal.logging.MetricsLogger;
@@ -40,10 +41,13 @@ public class RotationLockTile extends QSTile<QSTile.BooleanState> {
     private final AnimationIcon mAutoToLandscape
             = new AnimationIcon(R.drawable.ic_landscape_from_auto_rotate_animation);
 
+    public static final String SPEC = "rotation";
+    private static final Intent DISPLAY_SETTINGS = new Intent(Settings.ACTION_DISPLAY_SETTINGS);
+
     private final RotationLockController mController;
 
     public RotationLockTile(Host host) {
-        super(host);
+        super(host, SPEC);
         mController = host.getRotationLockController();
     }
 
@@ -62,7 +66,7 @@ public class RotationLockTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    protected void handleClick() {
+    protected void handleToggleClick() {
         if (mController == null) return;
         MetricsLogger.action(mContext, getMetricsCategory(), !mState.value);
         final boolean newState = !mState.value;
@@ -71,17 +75,11 @@ public class RotationLockTile extends QSTile<QSTile.BooleanState> {
     }
 
     @Override
-    protected void handleSecondaryClick() {
+    protected void handleDetailClick() {
     intent.setClassName("com.android.settings",
             "com.android.settings.Settings$DisplayRotationSettingsActivity");
         mHost.startActivityDismissingKeyguard(intent);
-    }
-
-    @Override
-    protected void handleLongClick() {
-    intent.setClassName("com.android.settings",
-            "com.android.settings.Settings$DisplayRotationSettingsActivity");
-        mHost.startActivityDismissingKeyguard(intent);
+        handleToggleClick();
     }
 
     @Override

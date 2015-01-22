@@ -26,15 +26,15 @@ import com.android.systemui.R;
 import com.android.systemui.qs.QSTile;
 
 public class VolumeTile extends QSTile<QSTile.BooleanState> {
-
+    public static final String SPEC = "volume";
     private static final Intent SOUND_SETTINGS = new Intent("android.settings.SOUND_SETTINGS");
 
     public VolumeTile(Host host) {
-        super(host);
+        super(host, SPEC);
     }
 
     @Override
-    protected void handleClick() {
+    protected void handleToggleClick() {
         MetricsLogger.action(mContext, getMetricsCategory());
         AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         am.adjustVolume(AudioManager.ADJUST_SAME, AudioManager.FLAG_SHOW_UI);
@@ -43,6 +43,12 @@ public class VolumeTile extends QSTile<QSTile.BooleanState> {
     @Override
     protected void handleLongClick() {
         mHost.startActivityDismissingKeyguard(SOUND_SETTINGS);
+    }
+
+    @Override
+    protected void handleDetailClick() {
+        mHost.startActivityDismissingKeyguard(SOUND_SETTINGS);
+        handleToggleClick();
     }
 
     @Override

@@ -46,6 +46,7 @@ import java.util.List;
 
 /** Quick settings tile: Wifi **/
 public class WifiTile extends QSTile<QSTile.SignalState> {
+    public static final String SPEC = "wifi";
     private static final Intent WIFI_SETTINGS = new Intent(Settings.ACTION_WIFI_SETTINGS);
 
     private final NetworkController mController;
@@ -56,15 +57,10 @@ public class WifiTile extends QSTile<QSTile.SignalState> {
     private final WifiSignalCallback mSignalCallback = new WifiSignalCallback();
 
     public WifiTile(Host host) {
-        super(host);
+        super(host, SPEC);
         mController = host.getNetworkController();
         mWifiController = mController.getAccessPointController();
         mDetailAdapter = new WifiDetailAdapter();
-    }
-
-    @Override
-    public boolean supportsDualTargets() {
-        return true;
     }
 
     @Override
@@ -102,14 +98,14 @@ public class WifiTile extends QSTile<QSTile.SignalState> {
     }
 
     @Override
-    protected void handleClick() {
+    protected void handleToggleClick() {
         mState.copyTo(mStateBeforeClick);
         MetricsLogger.action(mContext, getMetricsCategory(), !mState.enabled);
         mController.setWifiEnabled(!mState.enabled);
     }
 
     @Override
-    protected void handleSecondaryClick() {
+    protected void handleDetailClick() {
         if (!mWifiController.canConfigWifi()) {
             mHost.startActivityDismissingKeyguard(new Intent(Settings.ACTION_WIFI_SETTINGS));
             return;
