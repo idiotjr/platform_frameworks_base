@@ -3605,7 +3605,14 @@ public final class Settings {
         @Deprecated
         public static final String DOCK_SOUNDS_ENABLED = Global.DOCK_SOUNDS_ENABLED;
 
-	/**
+        /**
+         * Whether to attach a queue to media notifications.
+         * Boolean setting.
+         * @hide
+         */
+        public static final String NOTIFICATION_PLAY_QUEUE = "notification_play_queue";
+
+        /**
          * Check the proximity sensor during wakeup
          * @hide
          */
@@ -4038,7 +4045,8 @@ public final class Settings {
             NOTIFICATION_SOUND,
             ACCELEROMETER_ROTATION,
             NOTIFICATION_LIGHT_SCREEN_ON,
-            ALLOW_LIGHTS
+            ALLOW_LIGHTS,
+            NOTIFICATION_PLAY_QUEUE
         };
 
         /**

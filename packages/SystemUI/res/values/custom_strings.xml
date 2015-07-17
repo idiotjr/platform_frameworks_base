@@ -35,4 +35,6 @@
     <!-- Screen record notification error title -->
     <string name="screenrecord_notif_error">Unable to record screen</string>
 
+    <!-- Play Queue -->
+    <string name="play_queue_extension">Show play queue</string>
 </resources>
