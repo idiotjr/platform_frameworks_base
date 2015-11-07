@@ -708,7 +708,7 @@ public final class PowerManagerService extends SystemService
                     Settings.System.BUTTON_BRIGHTNESS_ENABLED),
                     false, mSettingsObserver, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.NAVIGATION_BAR_ENABLED),
+                    Settings.System.NAVIGATION_BAR_VISIBLE),
                     false, mSettingsObserver, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.Secure.getUriFor(
                     Secure.BRIGHTNESS_USE_TWILIGHT),
@@ -869,7 +869,7 @@ public final class PowerManagerService extends SystemService
         }
 
         final boolean navBarEnabled = Settings.System.getIntForUser(resolver,
-                Settings.System.NAVIGATION_BAR_ENABLED, 0, UserHandle.USER_CURRENT) != 0;
+                Settings.System.NAVIGATION_BAR_VISIBLE, 0, UserHandle.USER_CURRENT) != 0;
         mButtonBrightnessEnabled &= !navBarEnabled;
 
         mProximityWakeEnabled = Settings.System.getInt(resolver,
