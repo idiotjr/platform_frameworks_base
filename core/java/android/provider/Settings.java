@@ -4173,6 +4173,12 @@ public final class Settings {
         public static final String STATUS_BAR_CUSTOM_HEADER_PROVIDER = "status_bar_custom_header_provider";
 
         /**
+         * Disable FC Notifications
+         * @hide
+         */
+        public static final String DISABLE_FC_NOTIFICATIONS = "disable_fc_notifications";
+        
+        /**
          * Show the pending notification counts as overlays on the status bar
          * @hide
          */
