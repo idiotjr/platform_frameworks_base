@@ -1024,7 +1024,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.System.VOLUME_ROCKER_MUSIC_CONTROLS), false, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.Secure.getUriFor(
-                    Settings.Secure.NAVIGATION_BAR_VISIBLE), false, this,
+                    Settings.System.NAVIGATION_BAR_VISIBLE), false, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.Secure.getUriFor(
                     Settings.Secure.NAVIGATION_BAR_HEIGHT), false, this,
@@ -2477,7 +2477,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
 
             boolean doShowNavbar = Settings.Secure.getIntForUser(resolver,
-                    Settings.Secure.NAVIGATION_BAR_VISIBLE,
+                    Settings.System.NAVIGATION_BAR_VISIBLE,
                     DUActionUtils.hasNavbarByDefault(mContext) ? 1 : 0,
                     UserHandle.USER_CURRENT) == 1;
             if (doShowNavbar != mNavbarVisible) {
@@ -6698,7 +6698,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
          * @author Carlo Savignano
          */
         if (isKeyCodeSupported(keyCode) && !virtualKey && (!virtualHardKey || !navBarKey)) {
-            if (mNavBarEnabled) {
+            if (mNavBarVisible) {
                 // Don't allow key events from hw keys when navbar is enabled.
                 return 0;
             } else if (!interactive) {
@@ -8963,7 +8963,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // Navigation bar visibility is dynamically configured in settings now
     @Override
     public boolean hasNavigationBar() {
-        return mNavbarVisible;
+        return mHasNavigationBar || mNavBarEnabled;
     }
 
     @Override
