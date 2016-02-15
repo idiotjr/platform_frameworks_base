@@ -31,6 +31,9 @@
     <string name="quick_settings_volume_panel_label">Volume panel</string>
     <!-- Sound QS Tile -->
     <string name="quick_settings_sound_label">Sound</string>
+    <string name="quick_settings_sound_ring">Ring</string>
+    <string name="quick_settings_sound_vibrate">Vibrate</string>
+    <string name="quick_settings_sound_silent">Silent</string>
     <!-- Sync qs tile -->
     <string name="quick_settings_sync_label">Sync</string>
     <!-- Content description of the sync tile in quick settings when off (not shown on the screen). [CHAR LIMIT=NONE] -->
