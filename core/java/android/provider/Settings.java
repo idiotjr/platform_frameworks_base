@@ -4099,6 +4099,12 @@ public final class Settings {
          */
         public static final String NETWORK_TRAFFIC_AUTOHIDE_THRESHOLD = "network_traffic_autohide_threshold";
 
+	/**
+         * Whether to show switches for wifi/cell/bt in the settings dashboard
+         * @hide
+         */
+        public static final String DASHBOARD_SWITCHES = "dashboard_switches";
+
         /**
          * show clear all recents button
          *  @hide
