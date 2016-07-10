@@ -296,12 +296,13 @@ public interface MetricsConstants {
     public static final int QS_BRIGHTNESS = 249;
     public static final int QS_SCREEN_OFF = 250;
     public static final int QS_SCREENSHOT = 251;
-    public static final int QS_VOLUME = 242;
-    public static final int QS_HEADSUP = 243;
-    public static final int QS_NAVBAR_TOGGLE = 244;
+    public static final int QS_VOLUME = 252;
+    public static final int QS_HEADSUP = 253;
+    public static final int QS_NAVBAR_TOGGLE = 254;
+    public static final int QS_SUBSTRATUM = 255;
 
     // network traffic settings
-    public static final int NETWORK_TRAFFIC_SETTINGS= 245;
+    public static final int NETWORK_TRAFFIC_SETTINGS= 256;
 
     // These constants must match those in the analytic pipeline, do not edit.
     // Add temporary values to the top of MetricsLogger instead.
