@@ -6916,7 +6916,14 @@ public final class Settings {
          */
         public static final String FLING_LONGSWIPE_THRESHOLD_DOWN_LAND = "fling_longswipe_threshold_down_land";
 
-         /**
+        /**
+         * width of Fling trails stroke, in density pixels
+         *
+         * @hide
+         */
+        public static final String FLING_TRAILS_WIDTH = "fling_trails_width";
+
+        /**
          * Whether user is allowed to pull down quick settings on secure keyguard.
          * @hide
          */
