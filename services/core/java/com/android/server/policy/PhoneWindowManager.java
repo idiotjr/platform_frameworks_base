@@ -7339,7 +7339,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
                 mBootMsgDialog.setProgress(info, current, total);
             }
-         });
+        });
     }
 
     /** {@inheritDoc} */
