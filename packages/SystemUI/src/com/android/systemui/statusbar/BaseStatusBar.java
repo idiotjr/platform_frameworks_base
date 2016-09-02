@@ -1757,7 +1757,7 @@ public abstract class BaseStatusBar extends SystemUI implements
                 @Override
                 public void run() {
                     // Additional guard to only launch in floating for headsup notifications
-                    if (FloatingHeadsup() && mHeadsUpManager.isClickedHeadsUpNotification(v)) {
+                    if (mHeadsUpManager.isClickedHeadsUpNotification(v)) {
                         boolean floating = true;
                         try {
                             // preloaded apps are added to the blacklist array when is recreated, handled in the notification manager
@@ -1772,8 +1772,8 @@ public abstract class BaseStatusBar extends SystemUI implements
                             int duration = Toast.LENGTH_LONG;
                             Toast.makeText(mContext, text, duration).show();
                         }
-                   }
-                   row.setJustClicked(false);
+                    }
+                    row.setJustClicked(false);
                 }
             });
 
@@ -2067,12 +2067,6 @@ public abstract class BaseStatusBar extends SystemUI implements
         mStackScroller.changeViewPosition(mEmptyShadeView, mStackScroller.getChildCount() - 2);
         mStackScroller.changeViewPosition(mKeyguardIconOverflowContainer,
                 mStackScroller.getChildCount() - 3);
-    }
-
-    private boolean FloatingHeadsup() {
-        return Settings.Secure.getIntForUser(
-                    mContext.getContentResolver(), Settings.Secure.FLOATING_HEADSUP, 0,
-                    UserHandle.USER_CURRENT) != 0;
     }
 
     private boolean shouldShowOnKeyguard(StatusBarNotification sbn) {

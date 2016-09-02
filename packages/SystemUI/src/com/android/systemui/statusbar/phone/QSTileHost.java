@@ -35,34 +35,24 @@ import com.android.internal.util.cm.QSUtils;
 import com.android.systemui.R;
 import com.android.systemui.qs.QSTile;
 import com.android.systemui.qs.tiles.AirplaneModeTile;
-import com.android.systemui.qs.tiles.AmbientDisplayTile;
-import com.android.systemui.qs.tiles.BatterySaverTile;
 import com.android.systemui.qs.tiles.BluetoothTile;
 import com.android.systemui.qs.tiles.BrightnessTile;
 import com.android.systemui.qs.tiles.CastTile;
 import com.android.systemui.qs.tiles.CellularTile;
 import com.android.systemui.qs.tiles.ColorInversionTile;
-import com.android.systemui.qs.tiles.CompassTile;
 import com.android.systemui.qs.tiles.DndTile;
-import com.android.systemui.qs.tiles.ExpandedDesktopTile;
 import com.android.systemui.qs.tiles.FlashlightTile;
 import com.android.systemui.qs.tiles.HeadsUpTile;
-import com.android.systemui.qs.tiles.FloatingTile;
 import com.android.systemui.qs.tiles.HotspotTile;
 import com.android.systemui.qs.tiles.IntentTile;
 import com.android.systemui.qs.tiles.LocationTile;
-import com.android.systemui.qs.tiles.NavigationBarTile;
-import com.android.systemui.qs.tiles.MusicTile;
-import com.android.systemui.qs.tiles.NfcTile;
 import com.android.systemui.qs.tiles.RotationLockTile;
 import com.android.systemui.qs.tiles.ScreenOffTile;
 import com.android.systemui.qs.tiles.ScreenshotTile;
 import com.android.systemui.qs.tiles.VolumeTile;
 import com.android.systemui.qs.tiles.ScreenTimeoutTile;
 import com.android.systemui.qs.tiles.UsbTetherTile;
-import com.android.systemui.qs.tiles.SyncTile;
 import com.android.systemui.qs.tiles.WifiTile;
-import com.android.systemui.qs.tiles.SubstratumTile;
 import com.android.systemui.settings.CurrentUserTracker;
 import com.android.systemui.statusbar.policy.BluetoothController;
 import com.android.systemui.statusbar.policy.CastController;
@@ -310,29 +300,9 @@ public class QSTileHost implements QSTile.Host {
             case QSConstants.TILE_HEADS_UP:
                 return new HeadsUpTile(this);
             case QSConstants.TILE_SCREEN_TIMEOUT:
-                return new ScreenTimeoutTile(this);
+                return new ScreenTimeoutTile(this);            
             case QSConstants.TILE_USB_TETHER:
                 return new UsbTetherTile(this);
-            case QSConstants.TILE_NAVIGATION_BAR:
-                return new NavigationBarTile(this);
-            case QSConstants.TILE_FLOATING:		
-                return new FloatingTile(this);
-            case QSConstants.TILE_COMPASS:
-                return new CompassTile(this);
-            case QSConstants.TILE_NFC:
-                return new NfcTile(this);
-            case QSConstants.TILE_SYNC:
-                return new SyncTile(this);
-            case QSConstants.TILE_BATTERY_SAVER:
-                return new BatterySaverTile(this);
-            case QSConstants.TILE_EXPANDED_DESKTOP:
-                return new ExpandedDesktopTile(this);
-            case QSConstants.TILE_AMBIENT_DISPLAY:
-                return new AmbientDisplayTile(this);
-            case QSConstants.TILE_MUSIC:		
-                return new MusicTile(this);
-            case QSConstants.TILE_SUBSTRATUM:
-                return new SubstratumTile(this);
             default:
                 throw new IllegalArgumentException("Bad tile spec: " + tileSpec);
         }
