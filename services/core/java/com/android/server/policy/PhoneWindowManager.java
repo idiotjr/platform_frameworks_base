@@ -22,7 +22,6 @@ import android.app.ActivityManagerInternal.SleepToken;
 import android.app.ActivityManagerNative;
 import android.app.AppOpsManager;
 import android.app.IUiModeManager;
-import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.app.StatusBarManager;
 import android.app.UiModeManager;
@@ -134,11 +133,12 @@ import com.android.internal.util.ScreenShapeHelper;
 import com.android.internal.widget.PointerLocationView;
 import com.android.server.GestureLauncherService;
 import com.android.server.LocalServices;
-import org.broken.internal.BootDexoptDialog;
 import com.android.server.policy.keyguard.KeyguardServiceDelegate;
 import com.android.server.policy.keyguard.KeyguardServiceDelegate.DrawnListener;
 
 import dalvik.system.DexClassLoader;
+
+import org.zephyr.internal.BootDexoptDialog;
 
 import java.io.File;
 import java.io.FileReader;
@@ -179,7 +179,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // No longer recommended for desk docks; still useful in car docks.
     static final boolean ENABLE_CAR_DOCK_HOME_CAPTURE = true;
     static final boolean ENABLE_DESK_DOCK_HOME_CAPTURE = false;
-    
+
     /**
      * Masks for checking presence of hardware keys.
      * Must match values in core/res/res/values/config.xml
@@ -309,7 +309,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private final Object mLock = new Object();
 
     Context mContext;
-    WindowManager mWm;
     IWindowManager mWindowManager;
     WindowManagerFuncs mWindowManagerFuncs;
     WindowManagerInternal mWindowManagerInternal;
@@ -648,7 +647,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // Custom hardware key rebinding
     private int mDeviceHardwareKeys;
     private boolean mDisableVibration;
- 
+
     // Tracks user-customisable behavior for certain key events
     private String mPressOnHomeBehavior          = ActionConstants.ACTION_NULL;
     private String mLongPressOnHomeBehavior      = ActionConstants.ACTION_NULL;
@@ -903,8 +902,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             resolver.registerContentObserver(Settings.Secure.getUriFor(
                     Settings.Secure.NAVIGATION_BAR_WIDTH), false, this,
                     UserHandle.USER_ALL);
-            resolver.registerContentObserver(Settings.System.getUriFor(  
-                    Settings.System.VOLUME_ROCKER_WAKE), false, this,  
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.VOLUME_ROCKER_WAKE), false, this,
                     UserHandle.USER_ALL);
             updateSettings();
         }
@@ -931,7 +930,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
         }
     }
-    
+
     class HwKeySettingsObserver extends ContentObserver {
         HwKeySettingsObserver(Handler handler) {
             super(handler);
@@ -1659,7 +1658,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     public void init(Context context, IWindowManager windowManager,
             WindowManagerFuncs windowManagerFuncs) {
         mContext = context;
-        mWm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         mWindowManager = windowManager;
         mWindowManagerFuncs = windowManagerFuncs;
         mWindowManagerInternal = LocalServices.getService(WindowManagerInternal.class);
@@ -1719,7 +1717,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
         mSettingsObserver = new SettingsObserver(mHandler);
         mSettingsObserver.observe();
-        
+
         mDeviceHardwareKeys = 0;
         mDeviceHardwareKeys = mContext.getResources().getInteger(
                 com.android.internal.R.integer.config_deviceHardwareKeys);
@@ -1728,7 +1726,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mHwKeySettingsObserver = new HwKeySettingsObserver(mHandler);
             mHwKeySettingsObserver.observe();
         }
-        
+
         mShortcutManager = new ShortcutManager(context);
         mUiMode = context.getResources().getInteger(
                 com.android.internal.R.integer.config_defaultUiModeType);
@@ -2267,7 +2265,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         if (updateRotation) {
             updateRotation(true);
         }
-        
+
     }
 
     private void updateNavigationBarSize() {
@@ -2341,8 +2339,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
             lp.format = PixelFormat.TRANSLUCENT;
             lp.setTitle("PointerLocation");
+            WindowManager wm = (WindowManager)
+                    mContext.getSystemService(Context.WINDOW_SERVICE);
             lp.inputFeatures |= WindowManager.LayoutParams.INPUT_FEATURE_NO_INPUT_CHANNEL;
-            mWm.addView(mPointerLocationView, lp);
+            wm.addView(mPointerLocationView, lp);
             mWindowManagerFuncs.registerPointerEventListener(mPointerLocationView);
         }
     }
@@ -2350,7 +2350,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private void disablePointerLocation() {
         if (mPointerLocationView != null) {
             mWindowManagerFuncs.unregisterPointerEventListener(mPointerLocationView);
-            mWm.removeView(mPointerLocationView);
+            WindowManager wm = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+            wm.removeView(mPointerLocationView);
             mPointerLocationView = null;
         }
     }
@@ -2835,14 +2836,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             // flag because we do know that the next window will take input
             // focus, so we want to get the IME window up on top of us right away.
             win.setFlags(
-                    windowFlags |
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE |
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
-                    WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM,
-                    windowFlags |
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE |
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
-                    WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+                windowFlags|
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE|
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM,
+                windowFlags|
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE|
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|
+                WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
 
             win.setDefaultIcon(icon);
             win.setDefaultLogo(logo);
@@ -2865,6 +2866,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
             params.setTitle("Starting " + packageName);
 
+            wm = (WindowManager)context.getSystemService(Context.WINDOW_SERVICE);
             view = win.getDecorView();
 
             if (win.isFloating()) {
@@ -2882,7 +2884,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 + " / " + appToken + ": "
                 + (view.getParent() != null ? view : null));
 
-            mWm.addView(view, params);
+            wm.addView(view, params);
 
             // Only return the view if it was successfully added to the
             // window manager... which we can tell by it having a parent.
@@ -2899,7 +2901,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         } finally {
             if (view != null && view.getParent() == null) {
                 Log.w(TAG, "view not successfully added to wm, removing view");
-                mWm.removeViewImmediate(view);
+                wm.removeViewImmediate(view);
             }
         }
 
@@ -2913,7 +2915,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 + window + " Callers=" + Debug.getCallers(4));
 
         if (window != null) {
-            mWm.removeView(window);
+            WindowManager wm = (WindowManager)mContext.getSystemService(Context.WINDOW_SERVICE);
+            wm.removeView(window);
         }
     }
 
@@ -3204,7 +3207,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
 	if ((HardwareKeysDisabled) && (!virtualKey)) {
 	    // Prema Chand Alugu (premaca@gmail.com)
-	    // Hardware Keys are disabled. 
+	    // Hardware Keys are disabled.
 	    // We could have ignore the event for Hardware Keys here itself.
 	    // However then any piece of code required below, or controlling
 	    // vibration could be problematic sometime. Hence this will be handled below
@@ -3224,7 +3227,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 	// We will let the Hardware key binding handling to continue below, Skip
 	// this part here. If the device does not have the real hardware keys,
 	// lets keep this for backward compatibility, Ouch!
-        if ((mKeyHandler != null && !keyguardOn && !virtualKey) && 
+        if ((mKeyHandler != null && !keyguardOn && !virtualKey) &&
             (mDeviceHardwareKeys == 0)) {
             boolean handled = mKeyHandler.handleKeyEvent(win, keyCode, repeatCount, down, canceled,
                     longPress, keyguardOn);
@@ -3406,7 +3409,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Log.i(TAG, "Ignoring MENU; event canceled.");
                     return -1;
                 }
-                
+
                 if (mEnableShiftMenuBugReports && (metaState & chordBug) == chordBug) {
                     Intent intent = new Intent(Intent.ACTION_BUG_REPORT);
                     mContext.sendOrderedBroadcast(intent, null);
@@ -3427,7 +3430,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                             res, Settings.Global.SHOW_PROCESSES, shown ? 0 : 1);
                     return -1;
                 }
-                
+
                 // Delay handling menu if a double-tap is possible.
                 if (!virtualKey
                         && !mDoubleTapOnMenuBehavior.equals(ActionConstants.ACTION_NULL)) {
@@ -3508,7 +3511,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             }
             return 0;
         } else if (keyCode == KeyEvent.KEYCODE_APP_SWITCH) {
-			
+
             // If we have released the app switch key, and didn't do anything else
             // while it was pressed, then it is time to process the app switch action!
             if (!down && mAppSwitchPressed) {
@@ -7330,14 +7333,14 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     /** {@inheritDoc} */
     @Override
-    public void showBootMessage(final ApplicationInfo info, final int current, final int total,
-            final boolean always) {
+    public void updateBootProgress(final int stage, final ApplicationInfo optimizedApp,
+            final int currentAppPos, final int totalAppCount) {
         mHandler.post(new Runnable() {
             @Override public void run() {
                 if (mBootMsgDialog == null) {
                     mBootMsgDialog = BootDexoptDialog.create(mContext);
                 }
-                mBootMsgDialog.setProgress(info, current, total);
+                mBootMsgDialog.setProgress(stage, optimizedApp, currentAppPos, totalAppCount);
             }
          });
     }
@@ -7679,7 +7682,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         return Settings.Global.getInt(mContext.getContentResolver(),
                 Settings.Global.ENABLE_ACCESSIBILITY_GLOBAL_GESTURE_ENABLED, 0) == 1;
     }
-    
+
     private boolean maybeDisableVibration(String action) {
         return action.equals(ActionConstants.ACTION_BACK)
                 || action.equals(ActionConstants.ACTION_MENU_BIG)
@@ -8016,7 +8019,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     public boolean navigationBarCanMove() {
         return mNavigationBarCanMove;
     }
-    
+
     @Override
     public void setLastInputMethodWindowLw(WindowState ime, WindowState target) {
         mLastInputMethodWindow = ime;

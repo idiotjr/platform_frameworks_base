@@ -1167,10 +1167,10 @@ public interface WindowManagerPolicy {
     public void systemBooted();
 
     /**
-     * Show boot time message to the user.
+     * Update UI for boot-up progress.
      */
-    public void showBootMessage(final ApplicationInfo info, final int current, final int total,
-            final boolean always);
+    public void updateBootProgress(final int stage, final ApplicationInfo optimizedApp,
+            final int currentAppPos, final int totalAppCount);
 
     /**
      * Hide the UI for showing boot messages, never to be displayed again.
