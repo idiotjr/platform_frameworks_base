@@ -21,4 +21,7 @@
         <item name="preferenceTheme">@style/TunerPreferenceTheme</item>
     </style>
 
+    <!-- Custom Carrier Label -->
+    <color name="status_bar_carrier_color">#FFFFFFFF</color>
+
 </resources>
